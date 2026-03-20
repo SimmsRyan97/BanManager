@@ -1,0 +1,47 @@
+settings:
+  warn-window-seconds: 600
+  max-warns-in-window: 3
+  repeated-rule-threshold: 2
+  auto-kick-message: "&cYou were kicked for repeated rule breaks."
+  date-format: "yyyy-MM-dd HH:mm:ss"
+
+messages:
+  no-permission: "&cYou do not have permission."
+  player-not-found: "&cPlayer not found: %player%"
+  unknown-rule: "&cUnknown rule: %rule%"
+  warn-applied: "&eWarned %player% for %rule%."
+  punishment-applied: "&6Punishment for %player%: %action%"
+  ban-disconnect: "&cYou are banned.\n&7Reason: %reason%\n&7By: %staff%"
+  tempban-disconnect: "&cYou are temporarily banned.\n&7Reason: %reason%\n&7By: %staff%\n&7Expires: %expires%"
+  ipban-disconnect: "&cYour IP is banned.\n&7Reason: %reason%\n&7By: %staff%"
+
+rules:
+  griefing:
+    display-name: "Griefing"
+    same-rule-auto-kick-threshold: 2
+    punishments:
+      1:
+        type: MESSAGE
+        message: "&ePlease stop griefing. This is your first warning."
+      2:
+        type: KICK
+        message: "&cKicked for griefing after repeated warnings."
+      3:
+        type: TEMP_BAN
+        duration: "1d"
+        message: "&cTemp banned for griefing."
+      4:
+        type: BAN
+        message: "&4Permanently banned for griefing."
+
+  exploiting:
+    display-name: "Exploiting"
+    same-rule-auto-kick-threshold: 2
+    punishments:
+      1:
+        type: TEMP_BAN
+        duration: "12h"
+        message: "&cTemp banned for exploiting."
+      2:
+        type: BAN
+        message: "&4Permanently banned for exploiting."
