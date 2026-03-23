@@ -6,6 +6,7 @@ import com.banmanager.service.PunishmentService;
 import com.banmanager.service.RuleService;
 import com.banmanager.util.TimeUtil;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -39,11 +40,11 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         String name = command.getName().toLowerCase(Locale.ROOT);
         return switch (name) {
             case "warn" -> handleWarn(sender, args);
-            case "kickplayer" -> handleKick(sender, args);
+            case "kick" -> handleKick(sender, args);
             case "tempban" -> handleTempBan(sender, args);
-            case "banplayer" -> handleBan(sender, args);
+            case "ban" -> handleBan(sender, args);
             case "ipban" -> handleIpBan(sender, args);
-            case "unbanplayer" -> handleUnban(sender, args);
+            case "unban" -> handleUnban(sender, args);
             case "bmhistory" -> handleHistory(sender, args);
             case "bmreload" -> handleReload(sender);
             default -> false;
@@ -81,7 +82,7 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
 
     private boolean handleKick(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /kickplayer <player> [reason]");
+            sender.sendMessage("Usage: /kick <player> [reason]");
             return true;
         }
         OfflinePlayer target = resolveTarget(args[0]);
@@ -120,7 +121,7 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
 
     private boolean handleBan(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /banplayer <player> [reason]");
+            sender.sendMessage("Usage: /ban <player> [reason]");
             return true;
         }
         OfflinePlayer target = resolveTarget(args[0]);
@@ -159,7 +160,7 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
 
     private boolean handleUnban(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /unbanplayer <player>");
+            sender.sendMessage("Usage: /unban <player>");
             return true;
         }
 
@@ -191,19 +192,36 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         List<PlayerRepository.SanctionRecord> sanctions = repository.getSanctions(uuid);
         String fmt = plugin.getConfig().getString("settings.date-format", "yyyy-MM-dd HH:mm:ss");
 
-        sender.sendMessage("---- History for " + punishmentService.safeTargetName(target) + " ----");
-        sender.sendMessage("Warnings: " + warnings.size());
-        for (PlayerRepository.WarningRecord warning : warnings.stream().skip(Math.max(0, warnings.size() - 5))
-                .toList()) {
-            sender.sendMessage(" - [" + TimeUtil.formatTimestamp(warning.getTimestamp(), fmt) + "] "
-                    + warning.getRule() + " by " + warning.getStaff() + " (" + warning.getReason() + ")");
+        record EventLine(long timestamp, String text) {
         }
 
-        sender.sendMessage("Sanctions: " + sanctions.size());
-        for (PlayerRepository.SanctionRecord sanction : sanctions.stream().skip(Math.max(0, sanctions.size() - 5))
-                .toList()) {
-            sender.sendMessage(" - [" + TimeUtil.formatTimestamp(sanction.getTimestamp(), fmt) + "] "
-                    + sanction.getType() + " by " + sanction.getStaff() + " (" + sanction.getReason() + ")");
+        List<EventLine> lines = new ArrayList<>();
+        for (PlayerRepository.WarningRecord warning : warnings) {
+            lines.add(new EventLine(
+                    warning.getTimestamp(),
+                    "WARN | rule=" + warning.getRule() + " | staff=" + warning.getStaff() + " | reason="
+                            + warning.getReason()));
+        }
+        for (PlayerRepository.SanctionRecord sanction : sanctions) {
+            lines.add(new EventLine(
+                    sanction.getTimestamp(),
+                    sanction.getType() + " | rule=" + sanction.getRule() + " | staff=" + sanction.getStaff()
+                            + " | reason=" + sanction.getReason()
+                            + (sanction.getDetails() == null || sanction.getDetails().isBlank() ? ""
+                                    : " | details=" + sanction.getDetails())));
+        }
+        lines.sort(Comparator.comparingLong(EventLine::timestamp));
+
+        sender.sendMessage("---- History for " + punishmentService.safeTargetName(target) + " ----");
+        sender.sendMessage("UUID: " + uuid);
+        sender.sendMessage("Warnings: " + warnings.size() + " | Sanctions: " + sanctions.size() + " | Total events: "
+                + lines.size());
+        if (lines.isEmpty()) {
+            sender.sendMessage("No moderation history found.");
+            return true;
+        }
+        for (EventLine line : lines) {
+            sender.sendMessage(" - [" + TimeUtil.formatTimestamp(line.timestamp(), fmt) + "] " + line.text());
         }
         return true;
     }
@@ -269,7 +287,7 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         }
 
         if (commandName.equals("tempban") && args.length == 2) {
-            return List.of("30m", "12h", "1d", "7d");
+            return List.of("30s", "30m", "12h", "1d", "7d");
         }
 
         return Collections.emptyList();

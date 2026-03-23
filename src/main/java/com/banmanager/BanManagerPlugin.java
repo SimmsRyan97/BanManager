@@ -1,6 +1,7 @@
 package com.banmanager;
 
 import com.banmanager.command.BanCommandExecutor;
+import com.banmanager.listener.CommandOverrideListener;
 import com.banmanager.listener.ConnectionListener;
 import com.banmanager.service.PlayerRepository;
 import com.banmanager.service.PunishmentService;
@@ -27,6 +28,7 @@ public class BanManagerPlugin extends JavaPlugin {
         this.punishmentService = new PunishmentService(this, playerRepository, ruleService);
 
         registerCommands();
+        getServer().getPluginManager().registerEvents(new CommandOverrideListener(), this);
         getServer().getPluginManager().registerEvents(new ConnectionListener(punishmentService, playerRepository),
                 this);
 
@@ -61,11 +63,11 @@ public class BanManagerPlugin extends JavaPlugin {
     private void registerCommands() {
         BanCommandExecutor executor = new BanCommandExecutor(this, punishmentService, playerRepository, ruleService);
         bind("warn", executor);
-        bind("kickplayer", executor);
+        bind("kick", executor);
         bind("tempban", executor);
-        bind("banplayer", executor);
+        bind("ban", executor);
         bind("ipban", executor);
-        bind("unbanplayer", executor);
+        bind("unban", executor);
         bind("bmhistory", executor);
         bind("bmreload", executor);
     }

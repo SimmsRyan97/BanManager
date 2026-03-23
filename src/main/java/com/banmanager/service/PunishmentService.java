@@ -11,6 +11,8 @@ import com.banmanager.util.TimeUtil;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -18,6 +20,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class PunishmentService {
+
+    private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("(?i)(?:&?#)([0-9a-f]{6})");
 
     private final BanManagerPlugin plugin;
     private final PlayerRepository repository;
@@ -203,6 +207,9 @@ public class PunishmentService {
         }
 
         int sameRuleThreshold = rule.getSameRuleAutoKickThreshold();
+        if (sameRuleThreshold <= 0) {
+            sameRuleThreshold = plugin.getConfig().getInt("settings.repeated-rule-threshold", 0);
+        }
         long sameRuleInWindow = repository.countWarningsForRuleInWindow(target.getUniqueId(), ruleKey, now,
                 windowMillis);
         if (sameRuleThreshold > 0 && sameRuleInWindow >= sameRuleThreshold) {
@@ -263,7 +270,18 @@ public class PunishmentService {
     }
 
     public String color(String text) {
-        return ChatColor.translateAlternateColorCodes('&', text == null ? "" : text);
+        String input = text == null ? "" : text;
+
+        Matcher matcher = HEX_COLOR_PATTERN.matcher(input);
+        StringBuffer output = new StringBuffer();
+        while (matcher.find()) {
+            String hex = matcher.group(1);
+            String replacement = net.md_5.bungee.api.ChatColor.of("#" + hex).toString();
+            matcher.appendReplacement(output, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(output);
+
+        return ChatColor.translateAlternateColorCodes('&', output.toString());
     }
 
     public String safeTargetName(OfflinePlayer target) {

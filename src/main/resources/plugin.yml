@@ -1,39 +1,40 @@
 name: BanManager
-version: 1.0.0
+version: 1.0.2
 main: com.banmanager.BanManagerPlugin
-api-version: '1.20'
-authors: [Copilot]
-description: Rule-based warning, kick and ban management.
+api-version: 1.18
+authors: WhiteIverson97
+description: Rule-based warning, kick and ban management system.
 
 commands:
   warn:
     description: Warn a player for a configured rule.
     usage: /warn <player> <rule> [reason]
     permission: banmanager.warn
-  kickplayer:
+  kick:
     description: Kick a player with a reason.
-    usage: /kickplayer <player> [reason]
+    usage: /kick <player> [reason]
     permission: banmanager.kick
   tempban:
     description: Temporarily ban a player.
     usage: /tempban <player> <duration> [reason]
     permission: banmanager.tempban
-  banplayer:
+  ban:
     description: Permanently ban a player.
-    usage: /banplayer <player> [reason]
+    usage: /ban <player> [reason]
     permission: banmanager.ban
   ipban:
     description: Ban a player's last known IP.
     usage: /ipban <player> [reason]
     permission: banmanager.ipban
-  unbanplayer:
+  unban:
     description: Remove active ban from a player.
-    usage: /unbanplayer <player>
+    usage: /unban <player>
     permission: banmanager.unban
   bmhistory:
     description: Show warning and sanction history.
     usage: /bmhistory <player>
     permission: banmanager.history
+    aliases: [dmhistory]
   bmreload:
     description: Reload BanManager config.
     usage: /bmreload

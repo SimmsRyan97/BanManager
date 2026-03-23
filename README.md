@@ -1,6 +1,6 @@
 # BanManager
 
-BanManager is a Spigot plugin for configurable warning and ban workflows that work for online and offline players.
+BanManager is a plugin for configurable warning and ban workflows that work for online and offline players.
 
 ## Features
 
@@ -24,7 +24,7 @@ BanManager is a Spigot plugin for configurable warning and ban workflows that wo
 1. Open this folder in IntelliJ IDEA.
 2. Make sure project SDK is Java 17.
 3. In Maven tool window, run `Lifecycle -> package`.
-4. The plugin JAR will be at `target/banmanager-1.0.0.jar`.
+4. The plugin JAR will be at `target/banmanager-[version].jar`.
 
 Or build from command line:
 
@@ -35,15 +35,15 @@ mvn clean package
 ## Commands
 
 - `/warn <player> <rule> [reason]`
-- `/kickplayer <player> [reason]`
+- `/kick <player> [reason]`
 - `/tempban <player> <duration> [reason]`
-- `/banplayer <player> [reason]`
+- `/ban <player> [reason]`
 - `/ipban <player> [reason]`
-- `/unbanplayer <player>`
+- `/unban <player>`
 - `/bmhistory <player>`
 - `/bmreload`
 
-Duration format examples for `tempban`: `30m`, `12h`, `1d`, `2w`.
+Duration format examples for `tempban`: `30s`, `30m`, `12h`, `1d`, `2w`.
 
 ## Configuration
 

@@ -1,26 +1,67 @@
+# ==================================================
+# BanManager configuration
+# ==================================================
+# Color codes support both legacy '&' and hex.
+# Legacy example: &c red, &e yellow, &7 gray
+# Hex examples: #FFAA00 or &#FFAA00
+# Placeholder examples:
+#   %player%  -> target player name
+#   %rule%    -> rule key used in /warn
+#   %reason%  -> punishment reason
+#   %staff%   -> staff member who issued the action
+#   %expires% -> temp ban expiry time
+
 settings:
+  # Time window (in seconds) used by auto-kick checks.
+  # Example: 600 = 10 minutes.
   warn-window-seconds: 600
+
+  # Auto-kick when total warns in the above window reach this amount.
+  # Set to 0 to disable this total-warn auto-kick.
   max-warns-in-window: 3
-  repeated-rule-threshold: 2
+
+  # Global same-rule auto-kick threshold inside the same window.
+  # Set to 0 to disable globally.
+  # A rule can override this with same-rule-auto-kick-threshold.
+  repeated-rule-threshold: 0
+
+  # Message used when auto-kick happens from warn-threshold logic.
   auto-kick-message: "&cYou were kicked for repeated rule breaks."
-  date-format: "yyyy-MM-dd HH:mm:ss"
+
+  # Date format used in moderation/history output.
+  # Current format example: 23-03-2026 18:30:00
+  date-format: "dd-MM-yyyy HH:mm:ss"
 
 messages:
+  # Generic feedback messages used by commands.
   no-permission: "&cYou do not have permission."
   player-not-found: "&cPlayer not found: %player%"
   unknown-rule: "&cUnknown rule: %rule%"
   warn-applied: "&eWarned %player% for %rule%."
   punishment-applied: "&6Punishment for %player%: %action%"
+
+  # Kick messages shown when a banned player tries to join.
   ban-disconnect: "&cYou are banned.\n&7Reason: %reason%\n&7By: %staff%"
   tempban-disconnect: "&cYou are temporarily banned.\n&7Reason: %reason%\n&7By: %staff%\n&7Expires: %expires%"
   ipban-disconnect: "&cYour IP is banned.\n&7Reason: %reason%\n&7By: %staff%"
 
 rules:
+  # Rule key used in /warn <player> <rule>
+  # Example command: /warn Steve griefing
   griefing:
+    # Friendly name for staff readability.
     display-name: "Griefing"
+
+    # Optional per-rule same-rule auto-kick threshold.
+    # This overrides settings.repeated-rule-threshold for this rule only.
+    # Set to 0 or remove to use global value.
     same-rule-auto-kick-threshold: 2
+
+    # Escalation ladder by warn count for THIS rule.
+    # If warn count exceeds highest key, highest configured action is reused.
     punishments:
       1:
+        # Available types: MESSAGE, BROADCAST, KICK, TEMP_BAN, BAN, IP_BAN
         type: MESSAGE
         message: "&ePlease stop griefing. This is your first warning."
       2:
@@ -28,6 +69,7 @@ rules:
         message: "&cKicked for griefing after repeated warnings."
       3:
         type: TEMP_BAN
+        # Duration supports: s, m, h, d, w (e.g. 30s, 30m, 12h, 7d, 2w)
         duration: "1d"
         message: "&cTemp banned for griefing."
       4:
@@ -36,7 +78,6 @@ rules:
 
   exploiting:
     display-name: "Exploiting"
-    same-rule-auto-kick-threshold: 2
     punishments:
       1:
         type: TEMP_BAN

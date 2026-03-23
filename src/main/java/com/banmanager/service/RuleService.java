@@ -120,8 +120,8 @@ public class RuleService {
             }
 
             String displayName = section.getString("display-name", ruleKey);
-            int sameRuleThreshold = section.getInt("same-rule-auto-kick-threshold",
-                    plugin.getConfig().getInt("settings.repeated-rule-threshold", 2));
+            int sameRuleThreshold = section.getInt("same-rule-auto-kick-threshold", 0);
+
             NavigableMap<Integer, PunishmentConfig> punishmentMap = new TreeMap<>();
 
             ConfigurationSection punishments = section.getConfigurationSection("punishments");
