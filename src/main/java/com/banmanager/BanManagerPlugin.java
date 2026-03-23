@@ -63,6 +63,7 @@ public class BanManagerPlugin extends JavaPlugin {
     private void registerCommands() {
         BanCommandExecutor executor = new BanCommandExecutor(this, punishmentService, playerRepository, ruleService);
         bind("warn", executor);
+        bind("warns", executor);
         bind("unwarn", executor);
         bind("kick", executor);
         bind("tempban", executor);

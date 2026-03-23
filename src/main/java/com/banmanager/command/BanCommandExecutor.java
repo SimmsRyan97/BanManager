@@ -8,8 +8,10 @@ import com.banmanager.util.TimeUtil;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,6 +42,7 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         String name = command.getName().toLowerCase(Locale.ROOT);
         return switch (name) {
             case "warn" -> handleWarn(sender, args);
+            case "warns" -> handleWarns(sender, args);
             case "unwarn" -> handleUnwarn(sender, args);
             case "kick" -> handleKick(sender, args);
             case "tempban" -> handleTempBan(sender, args);
@@ -51,6 +54,50 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
             case "bmreload" -> handleReload(sender);
             default -> false;
         };
+    }
+
+    private boolean handleWarns(CommandSender sender, String[] args) {
+        if (args.length < 1) {
+            sender.sendMessage(punishmentService.color("&eUsage: &f/warns <player>"));
+            return true;
+        }
+
+        OfflinePlayer target = resolveTarget(args[0]);
+        if (target == null) {
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
+            return true;
+        }
+
+        List<PlayerRepository.WarningRecord> warnings = repository.getWarnings(target.getUniqueId());
+        String fmt = plugin.getConfig().getString("settings.date-format", "yyyy-MM-dd HH:mm:ss");
+
+        sender.sendMessage(
+                punishmentService.color("&6---- Warnings for " + punishmentService.safeTargetName(target) + " ----"));
+        sender.sendMessage(punishmentService.color("&7UUID: &f" + target.getUniqueId()));
+        sender.sendMessage(punishmentService.color("&cTotal warnings: &f" + warnings.size()));
+
+        if (warnings.isEmpty()) {
+            sender.sendMessage(punishmentService.color("&7No warnings found."));
+            return true;
+        }
+
+        Map<String, Long> byRule = warnings.stream()
+                .collect(Collectors.groupingBy(w -> w.getRule().toLowerCase(Locale.ROOT), LinkedHashMap::new,
+                        Collectors.counting()));
+        String ruleSummary = byRule.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(", "));
+        sender.sendMessage(punishmentService.color("&eBy rule: &f" + ruleSummary));
+
+        int start = Math.max(0, warnings.size() - 10);
+        List<PlayerRepository.WarningRecord> latest = warnings.subList(start, warnings.size());
+        for (PlayerRepository.WarningRecord warning : latest) {
+            sender.sendMessage(punishmentService.color(
+                    "&c- [" + TimeUtil.formatTimestamp(warning.getTimestamp(), fmt) + "] &f"
+                            + warning.getRule() + " | staff=" + warning.getStaff() + " | reason="
+                            + warning.getReason()));
+        }
+        return true;
     }
 
     private boolean handleUnwarn(CommandSender sender, String[] args) {

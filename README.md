@@ -35,6 +35,7 @@ mvn clean package
 ## Commands
 
 - `/warn <player> <rule> [reason]`
+- `/warns <player>`
 - `/unwarn <player> <count|all>`
 - `/kick <player> [reason]`
 - `/tempban <player> <duration> [reason]`

@@ -1,5 +1,5 @@
 name: BanManager
-version: 1.0.4
+version: 1.0.5
 main: com.banmanager.BanManagerPlugin
 api-version: 1.18
 author: WhiteIverson97
@@ -10,6 +10,9 @@ commands:
     description: Warn a player for a configured rule.
     usage: /warn <player> <rule> [reason]
     permission: banmanager.warn
+  warns:
+    description: View warning history for a player.
+    usage: /warns <player>
   unwarn:
     description: Remove warning entries from a player.
     usage: /unwarn <player> <count|all>
