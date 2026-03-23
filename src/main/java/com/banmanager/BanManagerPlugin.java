@@ -45,7 +45,7 @@ public class BanManagerPlugin extends JavaPlugin {
     public void reloadAll() {
         reloadConfig();
         ruleService.reload();
-        playerRepository.save();
+        playerRepository.load();
     }
 
     public PlayerRepository getPlayerRepository() {
@@ -63,11 +63,13 @@ public class BanManagerPlugin extends JavaPlugin {
     private void registerCommands() {
         BanCommandExecutor executor = new BanCommandExecutor(this, punishmentService, playerRepository, ruleService);
         bind("warn", executor);
+        bind("unwarn", executor);
         bind("kick", executor);
         bind("tempban", executor);
         bind("ban", executor);
         bind("ipban", executor);
         bind("unban", executor);
+        bind("clearpunishments", executor);
         bind("bmhistory", executor);
         bind("bmreload", executor);
     }

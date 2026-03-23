@@ -35,13 +35,17 @@ mvn clean package
 ## Commands
 
 - `/warn <player> <rule> [reason]`
+- `/unwarn <player> <count|all>`
 - `/kick <player> [reason]`
 - `/tempban <player> <duration> [reason]`
 - `/ban <player> [reason]`
 - `/ipban <player> [reason]`
 - `/unban <player>`
+- `/clearpunishments <player> <count|all>`
 - `/bmhistory <player>`
 - `/bmreload`
+
+`/bmreload` reloads both config and `data.yml` from disk, so manual edits to `data.yml` are applied after reload.
 
 Duration format examples for `tempban`: `30s`, `30m`, `12h`, `1d`, `2w`.
 

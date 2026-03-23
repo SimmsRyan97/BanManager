@@ -40,27 +40,53 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         String name = command.getName().toLowerCase(Locale.ROOT);
         return switch (name) {
             case "warn" -> handleWarn(sender, args);
+            case "unwarn" -> handleUnwarn(sender, args);
             case "kick" -> handleKick(sender, args);
             case "tempban" -> handleTempBan(sender, args);
             case "ban" -> handleBan(sender, args);
             case "ipban" -> handleIpBan(sender, args);
             case "unban" -> handleUnban(sender, args);
+            case "clearpunishments" -> handleClearPunishments(sender, args);
             case "bmhistory" -> handleHistory(sender, args);
             case "bmreload" -> handleReload(sender);
             default -> false;
         };
     }
 
-    private boolean handleWarn(CommandSender sender, String[] args) {
+    private boolean handleUnwarn(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /warn <player> <rule> [reason]");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/unwarn <player> <count|all>"));
             return true;
         }
 
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage(plugin.getConfig().getString("messages.player-not-found", "Player not found: %player%")
-                    .replace("%player%", args[0]));
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
+            return true;
+        }
+
+        int removed = removeWarnings(target, args[1]);
+        if (removed < 0) {
+            sender.sendMessage(punishmentService.color("&cInvalid amount. Use a number or 'all'."));
+            return true;
+        }
+
+        sender.sendMessage(punishmentService.color(
+                "&aRemoved &f" + removed + " &awarning(s) from &f" + punishmentService.safeTargetName(target)));
+        return true;
+    }
+
+    private boolean handleWarn(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(punishmentService.color("&eUsage: &f/warn <player> <rule> [reason]"));
+            return true;
+        }
+
+        OfflinePlayer target = resolveTarget(args[0]);
+        if (target == null) {
+            sender.sendMessage(punishmentService.color(plugin.getConfig()
+                    .getString("messages.player-not-found", "&cPlayer not found: %player%")
+                    .replace("%player%", args[0])));
             return true;
         }
 
@@ -82,29 +108,29 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
 
     private boolean handleKick(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /kick <player> [reason]");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/kick <player> [reason]"));
             return true;
         }
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage("Unknown player: " + args[0]);
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
             return true;
         }
 
         String reason = args.length >= 2 ? String.join(" ", slice(args, 1)) : "Kicked by staff.";
         punishmentService.kick(sender, target, reason);
-        sender.sendMessage("Kicked " + punishmentService.safeTargetName(target));
+        sender.sendMessage(punishmentService.color("&aKicked &f" + punishmentService.safeTargetName(target)));
         return true;
     }
 
     private boolean handleTempBan(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage("Usage: /tempban <player> <duration> [reason]");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/tempban <player> <duration> [reason]"));
             return true;
         }
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage("Unknown player: " + args[0]);
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
             return true;
         }
 
@@ -112,78 +138,103 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         String reason = args.length >= 3 ? String.join(" ", slice(args, 2)) : "Temporarily banned by staff.";
         Optional<String> error = punishmentService.tempBan(sender, target, duration, reason);
         if (error.isPresent()) {
-            sender.sendMessage(error.get());
+            sender.sendMessage(punishmentService.color("&c" + error.get()));
             return true;
         }
-        sender.sendMessage("Temp banned " + punishmentService.safeTargetName(target) + " for " + duration);
+        sender.sendMessage(punishmentService.color(
+                "&aTemp banned &f" + punishmentService.safeTargetName(target) + " &afor &f" + duration));
         return true;
     }
 
     private boolean handleBan(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ban <player> [reason]");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/ban <player> [reason]"));
             return true;
         }
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage("Unknown player: " + args[0]);
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
             return true;
         }
 
         String reason = args.length >= 2 ? String.join(" ", slice(args, 1)) : "Permanently banned by staff.";
         punishmentService.ban(sender, target, reason);
-        sender.sendMessage("Banned " + punishmentService.safeTargetName(target));
+        sender.sendMessage(punishmentService.color("&aBanned &f" + punishmentService.safeTargetName(target)));
         return true;
     }
 
     private boolean handleIpBan(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /ipban <player> [reason]");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/ipban <player> [reason]"));
             return true;
         }
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage("Unknown player: " + args[0]);
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
             return true;
         }
 
         String reason = args.length >= 2 ? String.join(" ", slice(args, 1)) : "IP banned by staff.";
         Optional<String> error = punishmentService.ipBan(sender, target, reason);
         if (error.isPresent()) {
-            sender.sendMessage(error.get());
+            sender.sendMessage(punishmentService.color("&c" + error.get()));
             return true;
         }
 
-        sender.sendMessage("IP banned " + punishmentService.safeTargetName(target));
+        sender.sendMessage(punishmentService.color("&aIP banned &f" + punishmentService.safeTargetName(target)));
         return true;
     }
 
     private boolean handleUnban(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /unban <player>");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/unban <player>"));
             return true;
         }
 
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage("Unknown player: " + args[0]);
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
             return true;
         }
 
         punishmentService.unban(sender, target);
-        sender.sendMessage("Unbanned " + punishmentService.safeTargetName(target));
+        sender.sendMessage(punishmentService.color("&aUnbanned &f" + punishmentService.safeTargetName(target)));
+        return true;
+    }
+
+    private boolean handleClearPunishments(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(punishmentService.color("&eUsage: &f/clearpunishments <player> <count|all>"));
+            return true;
+        }
+
+        OfflinePlayer target = resolveTarget(args[0]);
+        if (target == null) {
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
+            return true;
+        }
+
+        int removed = removeSanctions(target, args[1]);
+        if (removed < 0) {
+            sender.sendMessage(punishmentService.color("&cInvalid amount. Use a number or 'all'."));
+            return true;
+        }
+
+        sender.sendMessage(punishmentService.color(
+                "&aRemoved &f" + removed + " &apunishment record(s) from &f"
+                        + punishmentService.safeTargetName(target)));
         return true;
     }
 
     private boolean handleHistory(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("Usage: /bmhistory <player>");
+            sender.sendMessage(punishmentService.color("&eUsage: &f/bmhistory <player>"));
             return true;
         }
 
         OfflinePlayer target = resolveTarget(args[0]);
         if (target == null) {
-            sender.sendMessage("Unknown player: " + args[0]);
+            sender.sendMessage(punishmentService.color("&cUnknown player: &f" + args[0]));
             return true;
         }
 
@@ -212,24 +263,65 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
         }
         lines.sort(Comparator.comparingLong(EventLine::timestamp));
 
-        sender.sendMessage("---- History for " + punishmentService.safeTargetName(target) + " ----");
-        sender.sendMessage("UUID: " + uuid);
-        sender.sendMessage("Warnings: " + warnings.size() + " | Sanctions: " + sanctions.size() + " | Total events: "
-                + lines.size());
+        sender.sendMessage(
+                punishmentService.color("&6---- History for " + punishmentService.safeTargetName(target) + " ----"));
+        sender.sendMessage(punishmentService.color("&7UUID: &f" + uuid));
+        sender.sendMessage(punishmentService.color(
+                "&cWarnings: &f" + warnings.size()
+                        + " &8| &eSanctions: &f" + sanctions.size()
+                        + " &8| &bEvents: &f" + lines.size()));
         if (lines.isEmpty()) {
-            sender.sendMessage("No moderation history found.");
+            sender.sendMessage(punishmentService.color("&7No moderation history found."));
             return true;
         }
         for (EventLine line : lines) {
-            sender.sendMessage(" - [" + TimeUtil.formatTimestamp(line.timestamp(), fmt) + "] " + line.text());
+            String rowColor = line.text().startsWith("WARN") ? "&c" : "&b";
+            sender.sendMessage(punishmentService.color(
+                    rowColor + "- [" + TimeUtil.formatTimestamp(line.timestamp(), fmt) + "] &f" + line.text()));
         }
         return true;
     }
 
     private boolean handleReload(CommandSender sender) {
         plugin.reloadAll();
-        sender.sendMessage("BanManager configuration reloaded.");
+        sender.sendMessage(punishmentService.color("&aBanManager configuration and data reloaded from disk."));
         return true;
+    }
+
+    private int removeWarnings(OfflinePlayer target, String amountArg) {
+        String normalized = amountArg.toLowerCase(Locale.ROOT);
+        if (normalized.equals("all")) {
+            return repository.clearWarnings(target.getUniqueId(), punishmentService.safeTargetName(target));
+        }
+
+        int amount;
+        try {
+            amount = Integer.parseInt(normalized);
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+        if (amount <= 0) {
+            return -1;
+        }
+        return repository.removeRecentWarnings(target.getUniqueId(), punishmentService.safeTargetName(target), amount);
+    }
+
+    private int removeSanctions(OfflinePlayer target, String amountArg) {
+        String normalized = amountArg.toLowerCase(Locale.ROOT);
+        if (normalized.equals("all")) {
+            return repository.clearSanctions(target.getUniqueId(), punishmentService.safeTargetName(target));
+        }
+
+        int amount;
+        try {
+            amount = Integer.parseInt(normalized);
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+        if (amount <= 0) {
+            return -1;
+        }
+        return repository.removeRecentSanctions(target.getUniqueId(), punishmentService.safeTargetName(target), amount);
     }
 
     @SuppressWarnings("deprecation")
@@ -288,6 +380,10 @@ public class BanCommandExecutor implements CommandExecutor, TabCompleter {
 
         if (commandName.equals("tempban") && args.length == 2) {
             return List.of("30s", "30m", "12h", "1d", "7d");
+        }
+
+        if ((commandName.equals("unwarn") || commandName.equals("clearpunishments")) && args.length == 2) {
+            return List.of("1", "2", "5", "all");
         }
 
         return Collections.emptyList();

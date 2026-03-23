@@ -1,5 +1,5 @@
 name: BanManager
-version: 1.0.2
+version: 1.0.4
 main: com.banmanager.BanManagerPlugin
 api-version: 1.18
 author: WhiteIverson97
@@ -10,6 +10,10 @@ commands:
     description: Warn a player for a configured rule.
     usage: /warn <player> <rule> [reason]
     permission: banmanager.warn
+  unwarn:
+    description: Remove warning entries from a player.
+    usage: /unwarn <player> <count|all>
+    permission: banmanager.unwarn
   kick:
     description: Kick a player with a reason.
     usage: /kick <player> [reason]
@@ -30,6 +34,10 @@ commands:
     description: Remove active ban from a player.
     usage: /unban <player>
     permission: banmanager.unban
+  clearpunishments:
+    description: Remove punishment history entries from a player.
+    usage: /clearpunishments <player> <count|all>
+    permission: banmanager.clearpunishments
   bmhistory:
     description: Show warning and sanction history.
     usage: /bmhistory <player>
@@ -45,10 +53,12 @@ permissions:
     default: op
     children:
       banmanager.warn: true
+      banmanager.unwarn: true
       banmanager.kick: true
       banmanager.tempban: true
       banmanager.ban: true
       banmanager.ipban: true
       banmanager.unban: true
+      banmanager.clearpunishments: true
       banmanager.history: true
       banmanager.reload: true

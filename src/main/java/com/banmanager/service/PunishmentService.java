@@ -45,7 +45,6 @@ public class PunishmentService {
         String targetName = safeTargetName(target);
 
         repository.addWarning(uuid, targetName, new WarningRecord(now, rule.getKey(), staff, reason));
-        repository.addSanction(uuid, targetName, new SanctionRecord(now, "WARN", rule.getKey(), staff, reason, "warn"));
 
         long ruleWarnCount = repository.countWarningsForRule(uuid, rule.getKey());
         PunishmentConfig punishment = rule.getPunishmentForCount((int) ruleWarnCount);
@@ -75,6 +74,17 @@ public class PunishmentService {
             return Optional.of("Invalid duration. Use values like 30m, 12h, 7d, 2w.");
         }
 
+        return tempBanInternal(actor, target, durationInput, reason, "manual");
+    }
+
+    private Optional<String> tempBanInternal(CommandSender actor, OfflinePlayer target, String durationInput,
+            String reason,
+            String ruleKey) {
+        long duration = TimeUtil.parseDurationMillis(durationInput);
+        if (duration <= 0) {
+            return Optional.of("Invalid duration. Use values like 30s, 30m, 12h, 7d, 2w.");
+        }
+
         long now = System.currentTimeMillis();
         long expiresAt = now + duration;
         String name = safeTargetName(target);
@@ -82,7 +92,7 @@ public class PunishmentService {
         ActiveBan ban = new ActiveBan("TEMP_BAN", reason, actor.getName(), now, expiresAt, "");
         repository.setActiveBan(target.getUniqueId(), name, ban);
         repository.addSanction(target.getUniqueId(), name,
-                new SanctionRecord(now, "TEMP_BAN", "manual", actor.getName(), reason, durationInput));
+                new SanctionRecord(now, "TEMP_BAN", ruleKey, actor.getName(), reason, durationInput));
 
         Player online = target.getPlayer();
         if (online != null) {
@@ -98,13 +108,17 @@ public class PunishmentService {
     }
 
     public void ban(CommandSender actor, OfflinePlayer target, String reason) {
+        banInternal(actor, target, reason, "manual");
+    }
+
+    private void banInternal(CommandSender actor, OfflinePlayer target, String reason, String ruleKey) {
         long now = System.currentTimeMillis();
         String name = safeTargetName(target);
 
         ActiveBan ban = new ActiveBan("BAN", reason, actor.getName(), now, 0L, "");
         repository.setActiveBan(target.getUniqueId(), name, ban);
         repository.addSanction(target.getUniqueId(), name,
-                new SanctionRecord(now, "BAN", "manual", actor.getName(), reason, "permanent"));
+                new SanctionRecord(now, "BAN", ruleKey, actor.getName(), reason, "permanent"));
 
         Player online = target.getPlayer();
         if (online != null) {
@@ -116,6 +130,10 @@ public class PunishmentService {
     }
 
     public Optional<String> ipBan(CommandSender actor, OfflinePlayer target, String reason) {
+        return ipBanInternal(actor, target, reason, "manual");
+    }
+
+    private Optional<String> ipBanInternal(CommandSender actor, OfflinePlayer target, String reason, String ruleKey) {
         long now = System.currentTimeMillis();
         String name = safeTargetName(target);
 
@@ -136,7 +154,7 @@ public class PunishmentService {
         ActiveBan ban = new ActiveBan("IP_BAN", reason, actor.getName(), now, 0L, ip);
         repository.setActiveBan(target.getUniqueId(), name, ban);
         repository.addSanction(target.getUniqueId(), name,
-                new SanctionRecord(now, "IP_BAN", "manual", actor.getName(), reason, ip));
+                new SanctionRecord(now, "IP_BAN", ruleKey, actor.getName(), reason, ip));
 
         if (online != null) {
             String msg = msg("messages.ipban-disconnect")
@@ -238,24 +256,33 @@ public class PunishmentService {
                 logSanction(actor, target, "BROADCAST", ruleKey, reason, broadcast);
             }
             case KICK -> {
-                kick(actor, target, actionMessage.isBlank() ? "Rule violation: " + ruleKey : actionMessage);
-                logSanction(actor, target, "KICK", ruleKey, reason, actionMessage);
+                kickWithRule(actor, target, actionMessage.isBlank() ? "Rule violation: " + ruleKey : actionMessage,
+                        ruleKey);
             }
             case TEMP_BAN -> {
                 String duration = punishment.getDuration().isBlank() ? "1d" : punishment.getDuration();
-                tempBan(actor, target, duration, actionMessage.isBlank() ? reason : actionMessage);
-                logSanction(actor, target, "TEMP_BAN", ruleKey, reason, duration);
+                tempBanInternal(actor, target, duration, actionMessage.isBlank() ? reason : actionMessage, ruleKey);
             }
             case BAN -> {
-                ban(actor, target, actionMessage.isBlank() ? reason : actionMessage);
-                logSanction(actor, target, "BAN", ruleKey, reason, actionMessage);
+                banInternal(actor, target, actionMessage.isBlank() ? reason : actionMessage, ruleKey);
             }
             case IP_BAN -> {
-                ipBan(actor, target, actionMessage.isBlank() ? reason : actionMessage);
-                logSanction(actor, target, "IP_BAN", ruleKey, reason, actionMessage);
+                ipBanInternal(actor, target, actionMessage.isBlank() ? reason : actionMessage, ruleKey);
             }
             default -> {
             }
+        }
+    }
+
+    private void kickWithRule(CommandSender actor, OfflinePlayer target, String reason, String ruleKey) {
+        String message = color("&cYou were kicked. &7Reason: " + reason);
+        long now = System.currentTimeMillis();
+        String name = safeTargetName(target);
+        repository.addSanction(target.getUniqueId(), name,
+                new SanctionRecord(now, "KICK", ruleKey, actor.getName(), reason, "kick"));
+        Player online = target.getPlayer();
+        if (online != null) {
+            online.kickPlayer(message);
         }
     }
 

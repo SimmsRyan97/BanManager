@@ -414,6 +414,58 @@ public class PlayerRepository {
         return new ArrayList<>(record.getSanctions());
     }
 
+    public synchronized int removeRecentWarnings(UUID uuid, String playerName, int amount) {
+        PlayerRecord record = getOrCreate(uuid, playerName);
+        List<WarningRecord> warnings = record.getWarnings();
+        int removable = Math.min(Math.max(amount, 0), warnings.size());
+        if (removable <= 0) {
+            return 0;
+        }
+
+        for (int i = 0; i < removable; i++) {
+            warnings.remove(warnings.size() - 1);
+        }
+        save();
+        return removable;
+    }
+
+    public synchronized int clearWarnings(UUID uuid, String playerName) {
+        PlayerRecord record = getOrCreate(uuid, playerName);
+        int removed = record.getWarnings().size();
+        if (removed <= 0) {
+            return 0;
+        }
+        record.getWarnings().clear();
+        save();
+        return removed;
+    }
+
+    public synchronized int removeRecentSanctions(UUID uuid, String playerName, int amount) {
+        PlayerRecord record = getOrCreate(uuid, playerName);
+        List<SanctionRecord> sanctions = record.getSanctions();
+        int removable = Math.min(Math.max(amount, 0), sanctions.size());
+        if (removable <= 0) {
+            return 0;
+        }
+
+        for (int i = 0; i < removable; i++) {
+            sanctions.remove(sanctions.size() - 1);
+        }
+        save();
+        return removable;
+    }
+
+    public synchronized int clearSanctions(UUID uuid, String playerName) {
+        PlayerRecord record = getOrCreate(uuid, playerName);
+        int removed = record.getSanctions().size();
+        if (removed <= 0) {
+            return 0;
+        }
+        record.getSanctions().clear();
+        save();
+        return removed;
+    }
+
     public synchronized long countWarningsForRule(UUID uuid, String rule) {
         return getWarnings(uuid).stream()
                 .filter(w -> w.getRule().equalsIgnoreCase(rule))
