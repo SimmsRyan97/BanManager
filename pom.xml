@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.pvptoggle</groupId>
-    <artifactId>pvptoggle</artifactId>
-    <version>1.0.0</version>
+    <groupId>com.banmanager</groupId>
+    <artifactId>banmanager</artifactId>
+    <version>1.0.5</version>
     <packaging>jar</packaging>
 
-    <name>PvPToggle</name>
-    <description>Allow players to toggle PvP on and off.</description>
+    <name>BanManager</name>
+    <description>Rule-based ban and warning management plugin.</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
